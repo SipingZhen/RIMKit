@@ -1,0 +1,21 @@
+schema_version: 1
+vendor: Noetix Robotics
+repository: https://github.com/Noetix-Robotics/noetix_n2_gym
+revision: 153aad12dcc44aeafe378efe2f652873b02e0d89
+revision_ref: main
+license: BSD-3-Clause
+license_file: LICENSE
+upstream_notice: null
+file_manifest: FILES.sha256
+
+model:
+  id: n2
+  upstream_path: resources/robots/N2
+  upstream_entrypoint: resources/robots/N2/mjcf/n2_18dof.xml
+  local_entrypoint: N2/n2_18dof.xml
+
+modifications:
+  - file: N2/n2_18dof.xml
+    summary: Removed the standalone floor and lights; added fixed hand, sole, and toe landmarks plus a hip-to-neck-proportioned fixed trunk landmark for position-only hand retargeting and contact-aware foot refinement.
+    upstream_sha256: f3af72699f0ce86bc186da72ae3de65425c7969167ad9b189355230d9f257cf2
+    local_sha256: 8ae105f75565cbde721c23552e909a3ca1e7de7f0d0a4d4d2e9a234dc8349734

@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use RIMKit's CoRe method in your research, please cite the software and papers listed in the README."
+title: "RIMKit"
+type: software
+authors:
+  - family-names: Jeong
+    given-names: Taemoon
+    email: taemoon-jeong@korea.ac.kr
+    website: "https://taemoon.notion.site/taemoon-page"
+contact:
+  - family-names: Jeong
+    given-names: Taemoon
+    email: taemoon-jeong@korea.ac.kr
+    website: "https://taemoon.notion.site/taemoon-page"
+repository-code: "https://github.com/tmjeong1103/RIMKit"
+url: "https://github.com/tmjeong1103/RIMKit"
+license: Apache-2.0
+version: 0.2.0.dev0
+date-released: 2026-08-12
+keywords:
+  - humanoid robotics
+  - motion retargeting
+  - contact-aware motion refinement
+  - MuJoCo
+  - SOMA

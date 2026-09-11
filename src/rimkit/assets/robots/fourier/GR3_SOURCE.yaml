@@ -1,0 +1,21 @@
+schema_version: 1
+vendor: Fourier Intelligence
+repository: https://github.com/YanjieZe/GMR
+revision: bb1bbe40774794fceb2a7c579a3464a28e68c844
+revision_ref: master
+license: MIT
+license_file: GMR-LICENSE
+upstream_notice: null
+file_manifest: FILES.sha256
+
+model:
+  id: gr3
+  upstream_path: assets/fourier_gr3v2_1_1
+  upstream_entrypoint: assets/fourier_gr3v2_1_1/mjcf/gr3v2_1_1_dummy_hand.xml
+  local_entrypoint: gr3/mjcf/gr3.xml
+
+modifications:
+  - file: gr3/mjcf/gr3.xml
+    summary: Removed the standalone floor and light; added aligned hip, sole, toe, and hand-tip landmarks; enabled the physical foot and dummy-hand mesh collisions used by contact-aware retargeting.
+    upstream_sha256: 811393ee295496d0c0c43818c13f791e07d8e8ed7641e20e1b844b2794d410ff
+    local_sha256: 8447ea51ea4a61f3b5eb709ec99fc8b74fd7099ed87bdfcd607661d726190b43

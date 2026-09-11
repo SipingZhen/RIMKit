@@ -1,0 +1,92 @@
+# Hugging Face Docker Space
+
+RIMKit's root `Dockerfile` packages the native C++ backend, FastAPI UI, MuJoCo
+models, and a headless OSMesa renderer into one Hugging Face Docker Space.
+
+The public deployment is available at
+[huggingface.co/spaces/robotaemoon/CoRe](https://huggingface.co/spaces/robotaemoon/CoRe).
+
+The target selector is populated from RIMKit's robot registry and exposes all
+seventeen bundled models: G1, H1, H2, R1, K1, Apollo, Oli, N1, N2, GR3, ADAM Lite,
+T1, T2, PM01, Asimov-1, X2-Ultra, and A3 T3.0. The Docker Space therefore uses the same model
+assets and retargeting profiles as the local browser demo and CLI.
+
+The source-motion control includes two one-click examples: Kimodo
+`foot_walk_stop.npz` and GEM-X `scurry_walk.pt`. Users can still drag or select
+their own Kimodo `.npz` and GEM-X `.pt` motions. The filename extension selects
+the adapter; both produce the same downloadable robot-motion `.npz` contract.
+
+## Public demo limits
+
+The image starts one worker on port `7860` with conservative anonymous-service
+limits:
+
+- 32 MB maximum SOMA source upload (`.npz` or `.pt`)
+- 1,800 frames per motion
+- three running-plus-queued jobs
+- 640×360 default and 1280×720 maximum preview resolution
+- 15 FPS browser preview cap; exported robot motion retains its source timeline
+- no intermediate stage archives
+- completed uploads and results removed after 30 minutes
+
+The final robot-motion `.npz`, manifest, thumbnail, and MP4 remain downloadable
+until the job expires. The final `.npz` is pickle-free regardless of source
+container. Kimodo input is opened with NumPy pickle support disabled; GEM-X
+`.pt` is loaded on CPU with PyTorch `weights_only=True` and has no unsafe
+fallback. Space restarts also clear the ephemeral job directory.
+
+## Create the Space
+
+1. Create a new Hugging Face Space and select **Docker** as its SDK.
+2. Clone the new Space repository.
+3. Copy this RIMKit checkout into the Space working tree without its `.git`
+   directory.
+4. Replace the Space's root `README.md` with
+   `deploy/huggingface/README.md` so the required Space metadata is retained.
+5. Commit and push to the Space repository. Hugging Face builds the root
+   `Dockerfile` and serves port `7860` automatically.
+
+The GitHub README intentionally keeps its publication-focused layout; the
+Space metadata therefore lives in a separate template.
+
+See Hugging Face's official [Docker Spaces documentation][docker-spaces] and
+[first Docker Space guide][first-space] for repository creation and build-log
+details. Hugging Face currently requires a PRO, Team, or Enterprise plan to
+create a Docker Space; hardware billing and availability can change, so check
+the current [Spaces overview][spaces-overview] before deployment.
+
+## Local container check
+
+```bash
+docker build --tag rimkit-hf-space .
+docker run --rm --publish 7860:7860 rimkit-hf-space
+```
+
+Open <http://127.0.0.1:7860> and verify the backend:
+
+```bash
+curl http://127.0.0.1:7860/api/health
+```
+
+The response should report `"backend": "native"` and the public limits listed
+above. The container uses `MUJOCO_GL=osmesa`, so MP4 rendering does not require
+a display server or GPU.
+
+## Hardware
+
+Start with CPU Basic for functional testing. RIMKit is CPU-bound; CPU Upgrade is
+the useful first upgrade when public queue latency becomes too high. A GPU
+Space is not required by the current pipeline.
+
+## Persistence and privacy
+
+Do not attach persistent storage for anonymous motion uploads unless a separate
+retention and privacy policy is established. The default image deliberately
+uses `/tmp/rimkit-runs` and never uploads user motions or results to the Hub.
+For a private or persistent service, review Hugging Face's [storage behavior]
+[space-storage] and define a retention policy before changing this default.
+
+[docker-spaces]: https://huggingface.co/docs/hub/spaces-sdks-docker
+[first-space]: https://huggingface.co/docs/hub/spaces-sdks-docker-first-demo
+[spaces-overview]: https://huggingface.co/docs/hub/spaces-overview
+[space-storage]: https://huggingface.co/docs/hub/spaces-storage

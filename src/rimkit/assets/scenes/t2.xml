@@ -1,0 +1,7 @@
+<mujoco model="rimkit-t2-scene">
+  <include file="../common/floor.xml"/>
+  <include file="../robots/booster/t2/t2.xml"/>
+  <compiler meshdir="../robots/booster/t2/meshes"/>
+  <option timestep="0.002" integrator="implicitfast"/>
+  <statistic center="0 0 0.72" extent="2.0"/>
+</mujoco>

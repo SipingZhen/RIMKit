@@ -1,0 +1,25 @@
+schema_version: 1
+vendor: Booster Robotics
+repository: https://github.com/BoosterRobotics/booster_assets
+revision: 38a0ae84b17743a8aa21511f69ed38e7d22d1664
+revision_ref: main
+license: BSD-3-Clause
+license_file: LICENSE
+upstream_notice: null
+file_manifest: FILES.sha256
+
+models:
+  - id: t1
+    upstream_entrypoint: robots/T1/T1_23dof.xml
+    local_entrypoint: t1/t1.xml
+    modifications:
+      summary: Re-rooted the kinematic tree at waist_yaw_link for pelvis-first IK; added aligned wrist, sole, and toe landmarks; retained the vendor joint names for ordered export.
+      upstream_sha256: f00e3410362b1e2267e6db05d25c33d6240bbf2436d62a409f07042bad4f7fb2
+      local_sha256: cbb3819f504e0a88e4fe36b795691ee41282a1579e5832b46211afac2e1d4420
+  - id: t2
+    upstream_entrypoint: robots/T2/T2_31dof/T2_31dof.xml
+    local_entrypoint: t2/t2.xml
+    modifications:
+      summary: Re-rooted the kinematic tree at waist_yaw_link for pelvis-first IK; added aligned hip, shoulder, hand, sole, and toe landmarks; retained the vendor joint names for ordered export.
+      upstream_sha256: b147ef5d8c0cd0dffbf76d3ac032d6f3f11e7c24caf47d21b9ee9de176b148e3
+      local_sha256: 5ce794b9861ce659d5805faa85c8558c850a4cbb7150813b962b9d82792a106c

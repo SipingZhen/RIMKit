@@ -1,0 +1,7 @@
+<mujoco model="rimkit-n2-scene">
+  <include file="../common/floor.xml"/>
+  <include file="../robots/noetix/N2/n2_18dof.xml"/>
+  <compiler meshdir="../robots/noetix/N2/meshes"/>
+  <option timestep="0.002" integrator="implicitfast"/>
+  <statistic center="0 0 0.75" extent="1.8"/>
+</mujoco>

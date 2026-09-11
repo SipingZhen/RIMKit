@@ -1,0 +1,7 @@
+<mujoco model="rimkit-a3-scene">
+  <include file="../common/floor.xml"/>
+  <include file="../robots/agibot/a3/a3_t3d0/mjcf/a3.xml"/>
+  <compiler meshdir="../robots/agibot/a3/a3_t3d0/meshes"/>
+  <option timestep="0.002" integrator="implicitfast"/>
+  <statistic center="0 0 0.85" extent="2.1"/>
+</mujoco>

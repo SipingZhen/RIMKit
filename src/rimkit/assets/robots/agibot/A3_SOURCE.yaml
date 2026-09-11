@@ -1,0 +1,21 @@
+schema_version: 1
+vendor: AgiBot
+repository: https://github.com/AgibotTech/A3-A3U-robot-model
+revision: 589f508ff357447c610a3f3004419035ddc8f153
+revision_ref: main
+license: MulanPSL-2.0
+license_file: LICENSE
+upstream_notice: null
+file_manifest: FILES.sha256
+
+model:
+  id: a3
+  upstream_path: a3_t3d0
+  upstream_entrypoint: a3_t3d0/mjcf/a3_t3d0.xml
+  local_entrypoint: a3/a3_t3d0/mjcf/a3.xml
+
+modifications:
+  - file: a3/a3_t3d0/mjcf/a3.xml
+    summary: Removed the standalone terrain include and added aligned shoulder, sole, toe, and hand-tip landmarks for contact-aware retargeting.
+    upstream_sha256: 30e628c8f701387c7a016c5a95927ec5879e9bce765c0d3940c925def3802f0d
+    local_sha256: baca9b574e6268358779b8dd658bae99a08fd1450949d8e3a130a865782ae5b7

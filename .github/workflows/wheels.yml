@@ -1,0 +1,36 @@
+name: Wheels
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-13, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install build pytest
+      - run: python -m build
+      - name: Install the built wheel
+        run: python -m pip install dist/*.whl
+      - name: Smoke-test installed package data and public API
+        working-directory: ${{ runner.temp }}
+        run: |
+          rimkit backend --require-native
+          rimkit methods list
+          python -m rimkit robots verify
+          python -c "from rimkit import Retargeter; Retargeter('g1')"
+          python -c "import core_retarget, rimkit; assert core_retarget.Retargeter is rimkit.Retargeter"
+          python -m pytest -q "${{ github.workspace }}/tests/integration/test_native_extension.py"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: dist/*

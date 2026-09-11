@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.dylib
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environments and builds
+.venv/
+venv/
+build/
+dist/
+wheelhouse/
+*.egg-info/
+_skbuild/
+
+# Local secrets and signing material
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Runtime artifacts
+runs/
+*.log
+
+# Local gallery staging. Only selected media under docs/media/final is released.
+docs/media/size_modified/
+
+# Frontend
+webui/node_modules/
+webui/dist/
+
+# Editors and OS files
+.DS_Store
+.idea/
+.vscode/
+
+# Local AI-assistant workspaces
+.agents/
+.claude/
+.codex/
