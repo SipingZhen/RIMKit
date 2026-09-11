@@ -24,6 +24,7 @@ def test_fpa_registry_covers_all_supported_robots_and_is_immutable() -> None:
         "apollo",
         "oli",
         "n1",
+        "n2",
         "adam",
         "t1",
         "pm01",
