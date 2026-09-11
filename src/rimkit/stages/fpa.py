@@ -1244,6 +1244,9 @@ def _apply_root_z_correction(
     targets: FpaTargetsResult,
     right_control: FloatArray,
     left_control: FloatArray,
+    *,
+    smooth_time: float,
+    dt: float,
 ) -> FloatArray:
     samples = np.full(len(qpos), np.nan, dtype=np.float64)
     for tick in range(len(qpos)):
@@ -1273,6 +1276,9 @@ def _apply_root_z_correction(
             ticks.astype(np.float64),
             samples[ticks],
         )
+        if len(correction) > 1 and smooth_time > 0.0:
+            sigma = max(float(smooth_time) / max(float(dt), 1e-12), 1e-6)
+            correction = gaussian_filter1d(correction, sigma=sigma, mode="nearest")
         qpos[:, 2] -= correction
     return correction
 
@@ -1532,6 +1538,8 @@ def _run_base_recovery(
         targets,
         primary.right_control_weight,
         primary.left_control_weight,
+        smooth_time=profile.root_z_correction_smooth_time,
+        dt=dt,
     )
     before_smoothing = qpos.copy()
     references = _extract_recovery_references(model, bodies, before_smoothing)

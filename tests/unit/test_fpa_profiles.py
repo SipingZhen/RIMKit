@@ -151,7 +151,10 @@ def test_n2_fpa_profile_excludes_hip_yaw_from_recovery_joints() -> None:
 
 
 def test_n2_fpa_profile_keeps_hip_yaw_out_of_secondary_foot_ik() -> None:
-    assert get_fpa_profile("n2").excluded_joint_tokens == ("hip_yaw",)
+    profile = get_fpa_profile("n2")
+
+    assert profile.excluded_joint_tokens == ("hip_yaw",)
+    assert profile.root_z_correction_smooth_time == 0.05
 
 
 def test_fpa_profiles_are_frozen_and_validate_active_contracts() -> None:

@@ -48,6 +48,7 @@ class FpaProfile:
     joint_correction_median_window: int = 1
     joint_correction_smooth_time: float = 0.0
     joint_correction_max_delta: float = 0.0
+    root_z_correction_smooth_time: float = 0.0
     swing_outlier_threshold: float = inf
     swing_outlier_max_adjustment: float = 0.0
     swing_outlier_contact_threshold: float = 0.5
@@ -110,6 +111,7 @@ class FpaProfile:
             "contact_ankle_orientation_weight",
             "joint_correction_smooth_time",
             "joint_correction_max_delta",
+            "root_z_correction_smooth_time",
             "swing_outlier_max_adjustment",
             "ground_geometry_clearance",
             "ground_geometry_max_correction",
@@ -199,6 +201,9 @@ FPA_PROFILES = MappingProxyType(
             # frame-independent FPA foot solve alternately correct this
             # sensitive joint at the walk-to-run transition.
             excluded_joint_tokens=("hip_yaw",),
+            # FPA's contact-derived root-height correction otherwise contains
+            # one-frame changes that read as rapid vertical bouncing.
+            root_z_correction_smooth_time=0.05,
         ),
         "adam": replace(
             _G1,
