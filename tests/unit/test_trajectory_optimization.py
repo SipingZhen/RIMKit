@@ -4,6 +4,21 @@ import numpy as np
 import pytest
 
 from rimkit.optimization import same_length_jerk_matrix, shape_trajectory_1d
+from rimkit.optimization.trajectory import _sparse_jerk_matrix
+
+
+@pytest.mark.parametrize("count", [1, 2, 3, 4, 5, 6, 30])
+def test_sparse_jerk_preserves_every_legacy_boundary_row(count: int) -> None:
+    np.testing.assert_array_equal(
+        _sparse_jerk_matrix(count, 0.03).toarray(), same_length_jerk_matrix(count, 0.03)
+    )
+
+
+def test_long_jerk_operator_has_linear_storage() -> None:
+    matrix = _sparse_jerk_matrix(100_000, 1 / 30)
+    assert matrix.shape == (100_000, 100_000)
+    assert matrix.nnz == 400_000
+    assert matrix.data.nbytes + matrix.indices.nbytes + matrix.indptr.nbytes < 6_000_000
 
 
 def test_same_length_jerk_matrix_preserves_legacy_boundary_rows() -> None:

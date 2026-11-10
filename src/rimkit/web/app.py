@@ -144,7 +144,7 @@ def _safe_original_filename(upload: UploadFile) -> str:
     if Path(filename).suffix.lower() not in SOURCE_MOTION_SUFFIXES:
         raise HTTPException(
             status_code=415,
-            detail="RIMKit accepts Kimodo .npz or GEM-X .pt source motion.",
+            detail="RIMKit accepts Kimodo .npz, GEM-X .pt, or LAFAN .bvh source motion.",
         )
     return filename
 
@@ -238,7 +238,7 @@ def create_app(
             "version": __version__,
             "backend": backend.selected,
             "backend_reason": backend.reason,
-            "source_formats": ["npz", "pt"],
+            "source_formats": ["npz", "pt", "bvh"],
             "limits": {
                 "max_upload_bytes": settings.max_upload_bytes,
                 "max_frames": settings.max_frames,

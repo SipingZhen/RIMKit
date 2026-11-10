@@ -53,7 +53,7 @@ DMR_PROFILES = MappingProxyType(
 def get_dmr_profile(
     robot_id: str,
     *,
-    source_provider: Literal["kimodo", "gem-x"] = "kimodo",
+    source_provider: Literal["kimodo", "gem-x", "bvh"] = "kimodo",
 ) -> DmrProfile:
     """Return the configured DMR profile for a supported robot.
 
@@ -71,6 +71,8 @@ def get_dmr_profile(
         ) from exc
     if source_provider == "kimodo":
         return profile
+    if source_provider == "bvh":
+        return replace(profile, orientation_smoothing_mode="quaternion_continuous")
     if source_provider != "gem-x":
         raise ConfigurationError(f"Unsupported source provider {source_provider!r}.")
 

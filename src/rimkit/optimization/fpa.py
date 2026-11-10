@@ -10,7 +10,7 @@ import cvxpy as cp
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from rimkit.optimization.trajectory import same_length_jerk_matrix
+from rimkit.optimization.trajectory import _sparse_jerk_matrix
 
 FloatArray = NDArray[np.float64]
 IntArray = NDArray[np.int64]
@@ -107,11 +107,7 @@ def shape_remain_trajectory(
 
     time_values, reference_values, dt = _samples(seconds, reference)
     count = len(time_values)
-    jerk = same_length_jerk_matrix(count, dt)
-    first = np.zeros((count - 1, count), dtype=np.float64)
-    for index in range(count - 1):
-        first[index, index] = -1.0
-        first[index, index + 1] = 1.0
+    jerk = _sparse_jerk_matrix(count, dt)
 
     variable = cp.Variable(count)
     objective: list[Any] = [
@@ -129,7 +125,7 @@ def shape_remain_trajectory(
             objective.append(
                 float(remain_weight)
                 * cp.sum_squares(  # type: ignore[attr-defined]
-                    first[np.arange(start, end)] @ variable
+                    variable[start + 1 : end + 1] - variable[start:end]
                 )
             )
     problem = cp.Problem(cp.Minimize(sum(objective)), [])
@@ -153,7 +149,7 @@ def shape_pinned_trajectory(
     """Squared tracking plus jerk regularization with fixed endpoints."""
 
     time_values, reference_values, dt = _samples(seconds, reference)
-    jerk = same_length_jerk_matrix(len(time_values), dt)
+    jerk = _sparse_jerk_matrix(len(time_values), dt)
     variable = cp.Variable(len(time_values))
     problem = cp.Problem(
         cp.Minimize(

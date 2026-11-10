@@ -181,8 +181,12 @@ def run_review(
     """
 
     source = Path(motion_path).expanduser().resolve()
-    source_provider: Literal["kimodo", "gem-x"] = (
-        "kimodo" if source.suffix.lower() == ".npz" else "gem-x"
+    source_provider: Literal["kimodo", "gem-x", "bvh"] = (
+        "kimodo"
+        if source.suffix.lower() == ".npz"
+        else "bvh"
+        if source.suffix.lower() == ".bvh"
+        else "gem-x"
     )
     destination = Path(output_dir).expanduser().resolve()
     if destination.exists():

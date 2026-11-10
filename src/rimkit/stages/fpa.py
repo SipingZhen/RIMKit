@@ -611,7 +611,7 @@ def build_fpa_targets(
     *,
     robot_id: str,
     fps: float,
-    source_provider: Literal["kimodo", "gem-x"] = "kimodo",
+    source_provider: Literal["kimodo", "gem-x", "bvh"] = "kimodo",
 ) -> FpaTargetsResult:
     """Build the exact profile-driven Stage 6 toe-primary targets."""
 
@@ -1914,7 +1914,7 @@ def solve_fpa(
     robot_id: str,
     fps: float,
     backend: BackendPreference | BackendSelection = "python",
-    source_provider: Literal["kimodo", "gem-x"] = "kimodo",
+    source_provider: Literal["kimodo", "gem-x", "bvh"] = "kimodo",
     left_ankle_target_rotations: ArrayLike | None = None,
     right_ankle_target_rotations: ArrayLike | None = None,
 ) -> FpaIkResult:
@@ -2048,7 +2048,7 @@ def run_fpa(
     robot_id: str,
     fps: float,
     backend: BackendPreference | BackendSelection = "python",
-    source_provider: Literal["kimodo", "gem-x"] = "kimodo",
+    source_provider: Literal["kimodo", "gem-x", "bvh"] = "kimodo",
     left_ankle_target_rotations: ArrayLike | None = None,
     right_ankle_target_rotations: ArrayLike | None = None,
 ) -> FpaResult:

@@ -89,15 +89,16 @@ def test_web_app_validates_submits_streams_and_downloads(tmp_path: Path) -> None
             assert health.json()["limits"]["preview_max_fps"] == 15.0
             assert health.json()["limits"]["default_video_width"] == 640
             assert health.json()["limits"]["default_video_height"] == 360
-            assert health.json()["source_formats"] == ["npz", "pt"]
+            assert health.json()["source_formats"] == ["npz", "pt", "bvh"]
 
             page = client.get("/")
             assert page.status_code == 200
             assert "Run CoRe retargeting" in page.text
             assert "Choose another motion" in page.text
-            assert 'accept=".npz,.pt"' in page.text
+            assert 'accept=".npz,.pt,.bvh"' in page.text
             assert (
-                "SOMA human motion in <code>.npz</code> (Kimodo) or <code>.pt</code> (GEM-X) format"
+                "SOMA human motion in <code>.npz</code> (Kimodo), <code>.pt</code> (GEM-X), "
+                "or <code>.bvh</code> (LAFAN) format"
             ) in page.text
             assert 'data-testid="replace-motion"' in page.text
             assert 'data-testid="example-picker"' in page.text

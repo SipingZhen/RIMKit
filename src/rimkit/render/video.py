@@ -40,7 +40,7 @@ from rimkit.robots.schema import RobotSpec
 
 FloatArray = NDArray[np.float64]
 RenderProgress = Callable[[int, int], None]
-SourceProvider = Literal["kimodo", "gem-x"]
+SourceProvider = Literal["kimodo", "gem-x", "bvh"]
 
 _DEFAULT_AZIMUTH = 135.0
 _DEFAULT_ELEVATION = -12.0
@@ -132,9 +132,11 @@ def _validated_output_path(path: Path, *, suffix: str, field: str) -> Path:
 def _validated_source_provider(source_provider: str) -> SourceProvider:
     if source_provider == "kimodo":
         return "kimodo"
+    if source_provider == "bvh":
+        return "bvh"
     if source_provider == "gem-x":
         return "gem-x"
-    raise PreviewRenderError("source_provider must be 'kimodo' or 'gem-x'")
+    raise PreviewRenderError("source_provider must be 'kimodo', 'gem-x', or 'bvh'")
 
 
 def _downsample_preview(
@@ -596,6 +598,7 @@ def render_motion_preview(
     height: int = LEGACY_HEIGHT,
     source_provider: SourceProvider = "kimodo",
     max_fps: float | None = None,
+    progress: RenderProgress | None = None,
 ) -> PreviewArtifacts:
     """Render optional MP4 and PNG previews for one robot trajectory.
 
@@ -644,6 +647,7 @@ def render_motion_preview(
         width=width,
         height=height,
         source_provider=provider,
+        progress=progress,
     )
     return PreviewArtifacts(
         video_path=video,

@@ -350,20 +350,14 @@ def _binary_contact_median(
     )
 
 
-def _velocity_matrix_same_length(frame_count: int, dt: float) -> FloatArray:
-    matrix = np.zeros((frame_count, frame_count), dtype=float)
-    matrix[0, 0] = -1.0 / dt
-    matrix[0, 1] = 1.0 / dt
-    if frame_count == 2:
-        matrix[1, 0] = -1.0 / dt
-        matrix[1, 1] = 1.0 / dt
-        return matrix
-    for index in range(1, frame_count - 1):
-        matrix[index, index - 1] = -0.5 / dt
-        matrix[index, index + 1] = 0.5 / dt
-    matrix[frame_count - 1, frame_count - 2] = -1.0 / dt
-    matrix[frame_count - 1, frame_count - 1] = 1.0 / dt
-    return matrix
+def _velocity_same_length(positions: FloatArray, dt: float) -> FloatArray:
+    """Apply the original finite differences with linear memory usage."""
+    result = np.empty_like(positions)
+    inverse_dt = 1.0 / dt
+    result[0] = positions[1] * inverse_dt - positions[0] * inverse_dt
+    result[-1] = positions[-1] * inverse_dt - positions[-2] * inverse_dt
+    result[1:-1] = positions[2:] * (0.5 * inverse_dt) - positions[:-2] * (0.5 * inverse_dt)
+    return result
 
 
 def _segment_bounds(segments: list[IntArray]) -> IntArray:
@@ -382,6 +376,7 @@ def build_contact_schedule(
     source_contact_name: str | None = None,
     floor_distance_threshold: float = 0.02,
     maximum_contact_bridge_time: float = 0.20,
+    infer_source_contacts: bool = False,
 ) -> ContactSchedule:
     """Build a robot-independent toe-contact schedule.
 
@@ -460,10 +455,9 @@ def build_contact_schedule(
     left_toe_positions_smoothed = _gaussian_smooth(
         seconds, left_toe_positions, smooth_time=smooth_time
     )
-    velocity_matrix = _velocity_matrix_same_length(frame_count, dt)
-    right_toe_velocity_smoothed = velocity_matrix @ right_toe_positions_smoothed
-    left_toe_velocity_smoothed = velocity_matrix @ left_toe_positions_smoothed
-    base_velocity_smoothed = velocity_matrix @ base_positions_smoothed
+    right_toe_velocity_smoothed = _velocity_same_length(right_toe_positions_smoothed, dt)
+    left_toe_velocity_smoothed = _velocity_same_length(left_toe_positions_smoothed, dt)
+    base_velocity_smoothed = _velocity_same_length(base_positions_smoothed, dt)
     base_xy_speed_smoothed = np.linalg.norm(base_velocity_smoothed[:, :2], axis=1)
     right_mean_abs_velocity = np.mean(np.abs(right_toe_velocity_smoothed), axis=1)
     left_mean_abs_velocity = np.mean(np.abs(left_toe_velocity_smoothed), axis=1)
@@ -488,7 +482,17 @@ def build_contact_schedule(
     contact_source = "geometry_fallback_toe"
     left_label: BoolArray | None = None
     right_label: BoolArray | None = None
-    if left_source_labels is not None and right_source_labels is not None:
+    if infer_source_contacts:
+        if left_source_labels is not None or motion.foot_contacts is not None:
+            raise MotionValidationError(
+                "Inferred contacts cannot override supplied contact labels."
+            )
+        # Seed the flight-aware branch with measured low/slow toes. Do not use
+        # merged geometry segments here: they may bridge a real flight interval.
+        left_label = left_close & left_slow
+        right_label = right_close & right_slow
+        contact_source = source_contact_name or "inferred_geometry_toe_contacts"
+    elif left_source_labels is not None and right_source_labels is not None:
         left_label = np.asarray(left_source_labels, dtype=np.bool_).reshape(-1)
         right_label = np.asarray(right_source_labels, dtype=np.bool_).reshape(-1)
         if left_label.shape != (frame_count,) or right_label.shape != (frame_count,):

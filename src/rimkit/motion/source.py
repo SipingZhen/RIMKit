@@ -16,8 +16,8 @@ from rimkit.motion.soma import (
     validate_soma_npz,
 )
 
-SourceContainer = Literal["npz", "pt"]
-SourceProvider = Literal["kimodo", "gem-x"]
+SourceContainer = Literal["npz", "pt", "bvh"]
+SourceProvider = Literal["kimodo", "gem-x", "bvh"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,7 +59,11 @@ class LoadedSourceMotion:
         """Build the provider-specific contact schedule used by all stages."""
 
         if self.gemx_contacts is None:
-            return build_contact_schedule(self.motion)
+            return build_contact_schedule(
+                self.motion,
+                infer_source_contacts=self.summary.provider == "bvh",
+                source_contact_name="bvh_inferred_toe_contacts",
+            )
         return build_contact_schedule(
             self.motion,
             left_source_labels=self.gemx_contacts.left_fused,
@@ -96,8 +100,10 @@ def _container(path: str | Path) -> SourceContainer:
         return "npz"
     if suffix == ".pt":
         return "pt"
+    if suffix == ".bvh":
+        return "bvh"
     raise MotionValidationError(
-        f"Unsupported source motion extension {suffix or '<none>'!r}; expected .npz or .pt."
+        f"Unsupported source motion extension {suffix or '<none>'!r}; expected .npz or .pt or .bvh."
     )
 
 
@@ -119,6 +125,13 @@ def validate_source_motion(
             max_frames=max_frames,
         )
         return _summary(validated, container_format="npz", provider="kimodo")
+    if container == "bvh":
+        from rimkit.motion.bvh import load_bvh_motion
+
+        motion = load_bvh_motion(
+            path, fps_override=fps_override, max_file_bytes=max_file_bytes, max_frames=max_frames
+        )
+        return _summary(motion.summary, container_format="bvh", provider="bvh")
     motion, _ = load_gemx_motion(
         path,
         fps_override=fps_override,
@@ -154,6 +167,15 @@ def load_source_motion(
         return LoadedSourceMotion(
             summary=_summary(motion.summary, container_format="npz", provider="kimodo"),
             motion=motion,
+        )
+    if container == "bvh":
+        from rimkit.motion.bvh import load_bvh_motion
+
+        motion = load_bvh_motion(
+            path, fps_override=fps_override, max_file_bytes=max_file_bytes, max_frames=max_frames
+        )
+        return LoadedSourceMotion(
+            summary=_summary(motion.summary, container_format="bvh", provider="bvh"), motion=motion
         )
     motion, contacts = load_gemx_motion(
         path,

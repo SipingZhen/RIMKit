@@ -54,7 +54,7 @@ class DmrResult:
     pelvis_orientation_weight: NDArray[np.float64]
     pelvis_decoupled_solve_blend: NDArray[np.float64]
     trunk_position_blend: NDArray[np.float64]
-    source_provider: Literal["kimodo", "gem-x"] = "kimodo"
+    source_provider: Literal["kimodo", "gem-x", "bvh"] = "kimodo"
     left_ankle_target_rotations: NDArray[np.float64] | None = None
     right_ankle_target_rotations: NDArray[np.float64] | None = None
 
@@ -117,8 +117,8 @@ class DmrResult:
             and self.torso_target_rotations.shape != expected_rotation_shape
         ):
             raise ValueError("DMR torso target rotations have an invalid shape.")
-        if self.source_provider not in {"kimodo", "gem-x"}:
-            raise ValueError("DMR source_provider must be 'kimodo' or 'gem-x'.")
+        if self.source_provider not in {"kimodo", "gem-x", "bvh"}:
+            raise ValueError("DMR source_provider must be 'kimodo', 'gem-x', or 'bvh'.")
         if (self.left_ankle_target_rotations is None) != (
             self.right_ankle_target_rotations is None
         ):
@@ -938,7 +938,7 @@ def _resolve_contact_confidences(
     *,
     left: ArrayLike | None,
     right: ArrayLike | None,
-    source_provider: Literal["kimodo", "gem-x"],
+    source_provider: Literal["kimodo", "gem-x", "bvh"],
 ) -> tuple[ArrayLike | None, ArrayLike | None]:
     if (left is None) != (right is None):
         raise ValueError(
@@ -964,7 +964,9 @@ def _resolve_contact_confidences(
             maximum_contact_bridge_time=0.30,
         )
     else:
-        schedule = build_contact_schedule(motion, source_joi=joi)
+        schedule = build_contact_schedule(
+            motion, source_joi=joi, infer_source_contacts=source_provider == "bvh"
+        )
     return schedule.left_confidence, schedule.right_confidence
 
 
@@ -977,7 +979,7 @@ def run_dmr(
     right_contact_confidence: ArrayLike | None = None,
     progress: DmrProgress | None = None,
     backend: BackendPreference | BackendSelection = "python",
-    source_provider: Literal["kimodo", "gem-x"] = "kimodo",
+    source_provider: Literal["kimodo", "gem-x", "bvh"] = "kimodo",
 ) -> DmrResult:
     """Retarget one SOMA motion with the selected verified robot profile."""
 

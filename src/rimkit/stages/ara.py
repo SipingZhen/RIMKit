@@ -230,18 +230,12 @@ def _contact_terms(
     profile: AraProfile,
     name_prefix: str,
 ) -> tuple[list[Any], list[Any]]:
-    first_difference = np.zeros((frame_count - 1, frame_count), dtype=np.float64)
-    for index in range(frame_count - 1):
-        first_difference[index, index] = -1.0
-        first_difference[index, index + 1] = 1.0
-
     objectives: list[Any] = []
     constraints: list[Any] = []
     for segment in segments:
         first_tick, last_tick = int(segment[0]), int(segment[-1])
         if last_tick <= first_tick:
             continue
-        segment_difference = first_difference[np.arange(first_tick, last_tick)]
         x_slack = cp.Variable(
             last_tick - first_tick,
             name=f"{name_prefix}_x_slack_{first_tick}_{last_tick}",
@@ -252,8 +246,10 @@ def _contact_terms(
         )
         constraints.extend(
             (
-                segment_difference @ affine_toe[:, 0] == x_slack,
-                segment_difference @ affine_toe[:, 1] == y_slack,
+                affine_toe[first_tick + 1 : last_tick + 1, 0] - affine_toe[first_tick:last_tick, 0]
+                == x_slack,
+                affine_toe[first_tick + 1 : last_tick + 1, 1] - affine_toe[first_tick:last_tick, 1]
+                == y_slack,
             )
         )
         objectives.append(
@@ -265,13 +261,11 @@ def _contact_terms(
         )
 
         segment_length = last_tick - first_tick + 1
-        selector = np.zeros((segment_length, frame_count), dtype=np.float64)
-        selector[np.arange(segment_length), np.arange(first_tick, last_tick + 1)] = 1.0
         z_slack = cp.Variable(
             segment_length,
             name=f"{name_prefix}_z_slack_{first_tick}_{last_tick}",
         )
-        constraints.append(selector @ affine_toe[:, 2] - float(target_z) == z_slack)
+        constraints.append(affine_toe[first_tick : last_tick + 1, 2] - float(target_z) == z_slack)
         objectives.append(
             profile.floor_lock_weight * cp.sum_squares(z_slack)  # type: ignore[attr-defined]
         )

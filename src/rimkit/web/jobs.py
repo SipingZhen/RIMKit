@@ -20,7 +20,7 @@ from rimkit.pipeline.events import CallbackEventSink, PipelineEvent
 from rimkit.pipeline.runner import RetargetRunResult, run_retarget_pipeline
 
 LOGGER = logging.getLogger(__name__)
-SOURCE_MOTION_SUFFIXES = frozenset({".npz", ".pt"})
+SOURCE_MOTION_SUFFIXES = frozenset({".npz", ".pt", ".bvh"})
 
 
 def _now() -> str:
@@ -196,7 +196,7 @@ class JobManager:
         if input_path.parent.parent != expected_root or output_dir.parent != expected_root:
             raise ValueError("Web jobs must stay inside their allocated directory.")
         if input_path.suffix.lower() not in SOURCE_MOTION_SUFFIXES:
-            raise ValueError("Web jobs require a .npz or .pt source motion.")
+            raise ValueError("Web jobs require a .npz, .pt, or .bvh source motion.")
         if not input_path.is_file():
             raise ValueError("The uploaded source motion is missing.")
 

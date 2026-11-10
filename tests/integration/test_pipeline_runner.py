@@ -65,6 +65,12 @@ class _Contacts:
     seconds = np.asarray([0.0, 1.0 / 30.0], dtype=np.float64)
     right_confidence = np.ones(2, dtype=np.float64)
     left_confidence = np.ones(2, dtype=np.float64)
+    contact_source = "test_feet"
+    left_contact_label = np.ones(2, dtype=np.bool_)
+    right_contact_label = np.ones(2, dtype=np.bool_)
+    flight_label = np.zeros(2, dtype=np.bool_)
+    left_contact_segments = np.asarray([[0, 2]], dtype=np.int64)
+    right_contact_segments = np.asarray([[0, 2]], dtype=np.int64)
 
     def reference_arrays(self) -> dict[str, np.ndarray[Any, Any]]:
         return {
@@ -97,6 +103,7 @@ def _install_fake_pipeline(
     source: Path,
 ) -> tuple[_Stage, _Stage]:
     motion = SimpleNamespace(
+        summary=SimpleNamespace(warnings=()),
         sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
         frame_count=2,
         fps=30.0,

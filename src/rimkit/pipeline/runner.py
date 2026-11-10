@@ -306,10 +306,14 @@ def run_retarget_pipeline(
     """Run every verified stage and atomically publish a self-describing bundle."""
 
     source = Path(motion_path).expanduser().resolve()
-    source_provider: Literal["kimodo", "gem-x"] = (
-        "kimodo" if source.suffix.lower() == ".npz" else "gem-x"
+    source_provider: Literal["kimodo", "gem-x", "bvh"] = (
+        "kimodo"
+        if source.suffix.lower() == ".npz"
+        else "bvh"
+        if source.suffix.lower() == ".bvh"
+        else "gem-x"
     )
-    source_container = "npz" if source_provider == "kimodo" else "pt"
+    source_container = source.suffix.lower().lstrip(".")
     destination = Path(output_dir).expanduser().resolve()
     robot = get_robot(robot_id)
     backend_selection = resolve_backend(backend)
@@ -628,6 +632,19 @@ def run_retarget_pipeline(
         preview = None
         if video_path is not None or thumbnail_path is not None:
             stage_started(PipelineStage.RENDERING, "Rendering the final motion preview.")
+
+            def render_progress(current: int, total: int) -> None:
+                _emit(
+                    sink,
+                    event_type=PipelineEventType.PROGRESS,
+                    stage=PipelineStage.RENDERING,
+                    job_id=job_id,
+                    robot_id=robot.robot_id,
+                    message="Rendering video frames.",
+                    current=current,
+                    total=total,
+                )
+
             preview = render_motion_preview(
                 robot_id=robot.robot_id,
                 qpos=final_collision.qpos,
@@ -640,6 +657,7 @@ def run_retarget_pipeline(
                 height=height,
                 source_provider=source_provider,
                 max_fps=preview_max_fps,
+                progress=render_progress,
             )
             stage_completed(
                 PipelineStage.RENDERING,
@@ -718,6 +736,7 @@ def run_retarget_pipeline(
         warnings = [
             "This is a complete pipeline result but remains unreviewed motion.",
             "Generated motions require visual and physical review before hardware use.",
+            *motion.summary.warnings,
         ]
         if backend_selection.reason == "native_extension_unavailable":
             warnings.append(
@@ -785,6 +804,18 @@ def run_retarget_pipeline(
                 "scs": _dependency_version("scs"),
             },
             "diagnostics": {
+                "contacts": {
+                    "source": contacts.contact_source,
+                    "left_contact_frames": int(np.count_nonzero(contacts.left_contact_label)),
+                    "right_contact_frames": int(np.count_nonzero(contacts.right_contact_label)),
+                    "flight_frames": (
+                        int(np.count_nonzero(contacts.flight_label))
+                        if contacts.flight_label is not None
+                        else None
+                    ),
+                    "left_segments": len(contacts.left_contact_segments),
+                    "right_segments": len(contacts.right_contact_segments),
+                },
                 "ara": asdict(ara.diagnostics),
                 "fpa": fpa_solver_diagnostics,
                 "initial_collision": asdict(initial_collision.diagnostics),

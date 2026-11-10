@@ -243,7 +243,7 @@ FPA_PROFILES = MappingProxyType(
 def get_fpa_profile(
     robot_id: str,
     *,
-    source_provider: Literal["kimodo", "gem-x"] = "kimodo",
+    source_provider: Literal["kimodo", "gem-x", "bvh"] = "kimodo",
 ) -> FpaProfile:
     """Return the immutable FPA profile for one supported robot."""
 
@@ -254,6 +254,18 @@ def get_fpa_profile(
         raise KeyError(
             f"Unknown FPA robot profile {robot_id!r}; available={tuple(FPA_PROFILES)}"
         ) from exc
+    if source_provider == "bvh":
+        if key == "n2":
+            # LAFAN running contains genuine single-support phases. Lower
+            # only within the existing both-feet geometry safety bound;
+            # zero support weights keep airborne frames unchanged.
+            return replace(
+                profile,
+                post_ground_root_lower_support_mode="any",
+                post_ground_dual_support_lower_max=0.03,
+                post_ground_dual_support_lower_speed=0.20,
+            )
+        return profile
     if source_provider == "kimodo":
         return profile
     if source_provider != "gem-x":

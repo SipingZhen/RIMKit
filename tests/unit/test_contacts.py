@@ -10,6 +10,7 @@ from rimkit.motion import (
     extract_soma_joi,
     load_soma_motion,
 )
+from rimkit.motion.contacts import _velocity_same_length
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 EXAMPLE = REPOSITORY / "examples" / "motions" / "kimodo" / "soma_rp_v11" / "stand_walk_run_stop.npz"
@@ -46,3 +47,18 @@ def test_reference_aliases_share_the_public_confidence_arrays() -> None:
     assert arrays["l_contact_confidence"] is schedule.left_confidence
     assert arrays["right_contact_confidence"] is schedule.right_confidence
     assert arrays["r_contact_confidence"] is schedule.right_confidence
+
+
+@pytest.mark.parametrize("count", [2, 3, 30])
+def test_linear_memory_velocity_matches_original_stencil(count: int) -> None:
+    dt = 1 / 30
+    positions = np.random.default_rng(42).normal(size=(count, 3))
+    original = np.zeros((count, count))
+    original[0, :2] = [-1 / dt, 1 / dt]
+    original[-1, -2:] = [-1 / dt, 1 / dt]
+    for i in range(1, count - 1):
+        original[i, i - 1] = -0.5 / dt
+        original[i, i + 1] = 0.5 / dt
+    np.testing.assert_allclose(
+        _velocity_same_length(positions, dt), original @ positions, atol=1e-12
+    )

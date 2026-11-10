@@ -287,6 +287,40 @@ def _run_pipeline(args: argparse.Namespace) -> int:
     return 0
 
 
+def _print_batch_progress(event: PipelineEvent) -> None:
+    if event.event_type == PipelineEventType.STAGE_STARTED:
+        print(f"  {event.stage.value}: {event.message}", file=sys.stderr, flush=True)
+    elif event.event_type == PipelineEventType.PROGRESS:
+        current, total = event.current, event.total
+        if current is not None and total is not None:
+            if current not in (1, total) and current % 30:
+                return
+            print(
+                f"  {event.stage.value}: {current}/{total} {event.message}",
+                file=sys.stderr,
+                flush=True,
+            )
+    elif event.event_type in {PipelineEventType.WARNING, PipelineEventType.FAILED}:
+        print(f"  {event.stage.value}: {event.message}", file=sys.stderr, flush=True)
+
+
+def _run_batch_bvh(args: argparse.Namespace) -> int:
+    from rimkit.batch import run_bvh_batch
+
+    try:
+        return run_bvh_batch(
+            args.input_dir,
+            motion_dir=args.motion_dir,
+            video_dir=args.video_dir,
+            config=RunConfig(robot=args.robot, fps=args.fps, backend=args.backend),
+            width=args.width,
+            height=args.height,
+            event_sink=CallbackEventSink(_print_batch_progress),
+        )
+    except OSError as exc:
+        raise RIMKitError(f"Could not access batch input or output: {exc}") from exc
+
+
 def _run_serve(args: argparse.Namespace) -> int:
     try:
         from rimkit.web.server import serve
@@ -344,7 +378,7 @@ def build_parser() -> argparse.ArgumentParser:
     robots_verify.add_argument("--json", action="store_true")
 
     validate_parser = commands.add_parser(
-        "validate", help="Validate a Kimodo .npz or GEM-X .pt SOMA motion."
+        "validate", help="Validate a Kimodo .npz, GEM-X .pt, or LAFAN .bvh motion."
     )
     validate_parser.add_argument("motion", type=Path)
     validate_parser.add_argument("--fps", type=float)
@@ -418,6 +452,18 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--height", type=int, default=720)
     run_parser.add_argument("--json", action="store_true")
 
+    batch_parser = commands.add_parser(
+        "batch-bvh", help="Retarget a directory of LAFAN BVH files to motions and videos."
+    )
+    batch_parser.add_argument("input_dir", type=Path, help="Directory containing BVH files.")
+    batch_parser.add_argument("--motion-dir", type=Path, required=True)
+    batch_parser.add_argument("--video-dir", type=Path, required=True)
+    batch_parser.add_argument("--robot", required=True, choices=_robot_choices())
+    batch_parser.add_argument("--fps", type=float, help="Override source FPS.")
+    batch_parser.add_argument("--backend", choices=("auto", "native", "python"), default="auto")
+    batch_parser.add_argument("--width", type=int, default=1280)
+    batch_parser.add_argument("--height", type=int, default=720)
+
     serve_parser = commands.add_parser("serve", help="Start the local browser interface.")
     serve_parser.add_argument("--host", default="127.0.0.1")
     serve_parser.add_argument("--port", type=int, default=8000)
@@ -470,6 +516,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _run_review(args)
         if args.command == "run":
             return _run_pipeline(args)
+        if args.command == "batch-bvh":
+            return _run_batch_bvh(args)
         if args.command == "serve":
             if not 1 <= args.port <= 65535:
                 parser.error("--port must be between 1 and 65535")

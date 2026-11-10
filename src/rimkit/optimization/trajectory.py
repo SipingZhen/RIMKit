@@ -9,6 +9,7 @@ from typing import Any
 import cvxpy as cp
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
+from scipy.sparse import csr_matrix  # type: ignore[import-untyped]
 
 FloatArray = NDArray[np.float64]
 
@@ -113,6 +114,30 @@ def same_length_jerk_matrix(sample_count: int, sample_period: float) -> FloatArr
     return matrix
 
 
+def _sparse_jerk_matrix(sample_count: int, sample_period: float) -> csr_matrix:
+    """The same boundary stencils as the public dense matrix, with O(T) storage."""
+    if sample_count <= 4:
+        return csr_matrix(same_length_jerk_matrix(sample_count, sample_period))
+    if not np.isfinite(sample_period) or sample_period <= 0:
+        raise ValueError("sample_period must be a finite positive scalar.")
+    count = sample_count
+    scale = 1.0 / (sample_period * sample_period * sample_period)
+    columns = np.empty((count, 4), dtype=np.int64)
+    data = np.empty((count, 4), dtype=np.float64)
+    columns[0] = np.arange(4)
+    columns[1] = np.arange(1, 5)
+    data[:2] = np.array([-1.0, 3.0, -3.0, 1.0]) * scale
+    columns[2:-2] = np.arange(2, count - 2)[:, None] + np.array([-2, -1, 1, 2])
+    data[2:-2] = np.array([0.5, -1.0, 1.0, -0.5]) * scale
+    columns[-2] = np.arange(count - 5, count - 1)
+    columns[-1] = np.arange(count - 4, count)
+    data[-2:] = np.array([1.0, -3.0, 3.0, -1.0]) * scale
+    return csr_matrix(
+        (data.ravel(), (np.repeat(np.arange(count), 4), columns.ravel())),
+        shape=(count, count),
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class TrajectoryShapeResult:
     """Immutable solution of one unconstrained joint-trajectory shaping problem."""
@@ -201,7 +226,7 @@ def shape_trajectory_1d(
             f"(min={minimum_step:g}, max={maximum_step:g})."
         )
     sample_period = float(np.mean(time_steps))
-    jerk_matrix = same_length_jerk_matrix(len(time_values), sample_period)
+    jerk_matrix = _sparse_jerk_matrix(len(time_values), sample_period)
 
     variable = cp.Variable(len(time_values))
     tracking_mask = np.ones(len(time_values), dtype=np.float64)
